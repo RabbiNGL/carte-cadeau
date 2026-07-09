@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Générateur de carte cadeau — Like a Dream Room</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* ============================================================
+   GÉNÉRATEUR DE CARTE CADEAU v2 — usage interne
+   Fonctionne en local (double-clic) ET hébergé (GitHub Pages…).
+   Personnalisation : variables CSS ci-dessous + objet CONFIG
+   en bas de page (marque, photo, liens, formules, contact).
+   Aucun secret dans ce fichier — hébergement public sans risque.
+   ============================================================ */
+:root{
+  --gold:#B8935A;--gold-light:#D4B483;--gold-dark:#8A6A38;
+  --cream:#FAF6EF;--cream-2:#F2EAD8;--cream-3:#E8DCC8;
+  --sand:#C9B99A;--text-dark:#2C2418;--text-mid:#5C4F3A;
+  --text-muted:#9A8870;--white:#FFFFFF;--border:#E0D4BE;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--cream)}
+body{font-family:'Jost',sans-serif;font-weight:300;color:var(--text-dark);padding:1.5rem 1rem 3rem;
+     print-color-adjust:exact;-webkit-print-color-adjust:exact}
+
+.gen-header{text-align:center;margin-bottom:1.6rem}
+.gen-header h1{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300}
+.gen-header h1 em{font-style:italic;color:var(--gold)}
+.gen-header p{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin-top:.3rem}
+
+.gen-layout{display:grid;grid-template-columns:340px 1fr;gap:2.2rem;max-width:920px;margin:0 auto;align-items:start}
+@media(max-width:760px){.gen-layout{grid-template-columns:1fr}}
+
+/* --- Panneau de saisie --- */
+.gen-panel{background:var(--white);border:1px solid var(--border);border-radius:4px;padding:1.4rem 1.3rem}
+.gen-panel-title{font-size:9px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-bottom:1.1rem}
+.g-field{margin-bottom:1rem}
+.g-field label{display:block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.35rem}
+.g-field input,.g-field select,.g-field textarea{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--text-dark);padding:.45rem 0;outline:none;border-radius:0;appearance:none;-webkit-appearance:none}
+.g-field input:focus,.g-field select:focus,.g-field textarea:focus{border-bottom-color:var(--gold)}
+.g-field textarea{resize:none;height:60px;line-height:1.5}
+.g-field input[type=file]{border-bottom:none;font-size:11px;color:var(--text-muted);padding:.3rem 0}
+.g-code-row{display:flex;gap:.6rem;align-items:flex-end}
+.g-code-row .g-field{flex:1;margin-bottom:0}
+.g-mini-btn{background:transparent;border:1px solid var(--gold);color:var(--gold-dark);font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;padding:.5rem .7rem;cursor:pointer;border-radius:2px;transition:all .2s;white-space:nowrap}
+.g-mini-btn:hover{background:var(--gold);color:var(--white)}
+.g-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.g-actions{margin-top:1.4rem;display:flex;flex-direction:column;gap:.6rem}
+.g-btn{background:var(--gold);color:var(--white);border:none;padding:.85rem;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.26em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background .2s}
+.g-btn:hover{background:var(--gold-dark)}
+.g-btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text-mid)}
+.g-btn.secondary:hover{border-color:var(--gold);color:var(--gold-dark);background:transparent}
+.g-hint{font-size:9px;color:var(--text-muted);line-height:1.6;text-align:center}
+
+/* --- Carte cadeau --- */
+.card-zone{display:flex;flex-direction:column;align-items:center;gap:.7rem}
+.card-zone-label{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-muted)}
+.ldc-gift-card{background:var(--white);border:1px solid var(--border);border-radius:4px;overflow:hidden;width:100%;max-width:430px;box-shadow:0 10px 40px rgba(44,36,24,.08)}
+
+/* Bandeau photo */
+.ldc-photo{position:relative;height:130px;overflow:hidden;display:none}
+.ldc-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.ldc-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(44,36,24,.05),rgba(250,246,239,.55) 92%,#FAF6EF 100%)}
+
+.ldc-card-top{background:linear-gradient(135deg,#FAF6EF 0%,#F2E9D4 55%,#EDE0C8 100%);padding:1.9rem 1.8rem;position:relative;overflow:hidden;text-align:center}
+.ldc-card-top::before{content:'';position:absolute;top:-25px;right:-25px;width:130px;height:130px;border-radius:50%;border:1px solid rgba(184,147,90,.12)}
+.ldc-card-top::after{content:'';position:absolute;bottom:-18px;left:-18px;width:80px;height:80px;border-radius:50%;border:1px solid rgba(184,147,90,.08)}
+.ldc-c-brand{font-size:8px;letter-spacing:.4em;text-transform:uppercase;color:var(--gold);margin-bottom:.9rem}
+.ldc-c-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;line-height:1.2;margin-bottom:.3rem}
+.ldc-c-title em{font-style:italic;color:var(--gold)}
+.ldc-c-sub{font-size:9px;color:var(--text-muted);letter-spacing:.1em;margin-bottom:1.1rem}
+.ldc-c-dedic{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.05rem;color:var(--gold-dark);margin:-.5rem 0 1rem;display:none}
+.ldc-c-amount{display:inline-flex;align-items:baseline;gap:3px;background:rgba(184,147,90,.1);border:1px solid rgba(184,147,90,.3);border-radius:2px;padding:.3rem .8rem}
+.ldc-c-amount-num{font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:var(--gold-dark);font-weight:400}
+.ldc-c-amount-cur{font-size:9px;color:var(--gold);letter-spacing:.1em}
+.ldc-c-deco{position:absolute;bottom:-5px;right:.8rem;font-family:'Cormorant Garamond',serif;font-size:5rem;color:rgba(184,147,90,.05);line-height:1;pointer-events:none}
+.ldc-card-body{padding:1.2rem 1.6rem}
+.ldc-c-orn{display:flex;justify-content:center;margin-bottom:.9rem;gap:6px;align-items:center}
+.ldc-c-orn-line{height:1px;width:34px;background:var(--cream-3)}
+.ldc-c-orn-dot{width:4px;height:4px;border-radius:50%;background:var(--sand)}
+.ldc-c-ftag{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:.25rem;text-align:center}
+.ldc-c-fname{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:400;margin-bottom:.15rem;text-align:center}
+.ldc-c-fdesc{font-size:10px;color:var(--text-muted);line-height:1.5;margin-bottom:.85rem;text-align:center}
+.ldc-c-features{display:flex;justify-content:center;flex-wrap:wrap;gap:.35rem .9rem;margin-bottom:.9rem}
+.ldc-c-feature{font-size:8px;letter-spacing:.08em;color:var(--text-mid);display:flex;align-items:center;gap:.35rem}
+.ldc-c-feature::before{content:'◇';color:var(--gold-light);font-size:7px}
+.ldc-c-msg{display:none;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.95rem;color:var(--text-mid);text-align:center;line-height:1.55;margin:0 auto .9rem;max-width:300px}
+.ldc-c-code{text-align:center;background:var(--cream-2);border:1px dashed var(--sand);border-radius:2px;padding:.75rem;margin-bottom:.8rem}
+.ldc-c-code-label{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.3rem}
+.ldc-c-code-val{font-size:1.05rem;font-weight:500;letter-spacing:.28em}
+.ldc-c-validity{font-size:8px;color:var(--text-muted);margin-top:.3rem;line-height:1.6}
+.ldc-card-foot{display:flex;align-items:center;gap:1rem;padding:.85rem 1.4rem 1rem;border-top:1px solid var(--border)}
+.ldc-foot-qr{flex-shrink:0;width:56px;height:56px;padding:4px;background:var(--white);border:1px solid var(--cream-3);border-radius:2px}
+.ldc-foot-qr img,.ldc-foot-qr canvas{width:100%!important;height:100%!important;display:block}
+.ldc-foot-infos{flex:1;text-align:left}
+.ldc-card-foot-text{font-size:9px;color:var(--text-muted);line-height:1.65}
+.ldc-card-foot-site{font-size:10px;color:var(--gold);letter-spacing:.1em;margin-top:.25rem;font-weight:400}
+.ldc-card-foot-contact{font-size:8px;color:var(--text-muted);margin-top:.15rem;letter-spacing:.04em}
+
+/* --- Impression : seule la carte, centrée, format A5 --- */
+@media print{
+  @page{size:A5 portrait;margin:0}
+  body{background:var(--white);padding:0}
+  .gen-header,.gen-panel,.card-zone-label,.g-hint{display:none!important}
+  .gen-layout{display:block;max-width:none}
+  .card-zone{min-height:100vh;justify-content:center}
+  .ldc-gift-card{box-shadow:none;max-width:120mm;border-color:var(--cream-3)}
+}
+</style>
+</head>
+<body>
+
+<div class="gen-header">
+  <h1>Générateur de <em>carte cadeau</em></h1>
+  <p>Like a Dream Room · Usage interne</p>
+</div>
+
+<div class="gen-layout">
+
+  <!-- PANNEAU DE SAISIE -->
+  <div class="gen-panel">
+    <div class="gen-panel-title">Informations de la carte</div>
+
+    <div class="g-code-row" style="margin-bottom:1rem">
+      <div class="g-field">
+        <label>Code cadeau</label>
+        <input type="text" id="g-code" placeholder="LDR-XXXXXX">
+      </div>
+      <button class="g-mini-btn" id="g-gen" type="button">Générer</button>
+    </div>
+
+    <div class="g-row">
+      <div class="g-field">
+        <label>Montant (€)</label>
+        <input type="number" id="g-montant" min="1" step="1" placeholder="175">
+      </div>
+      <div class="g-field">
+        <label>Formule</label>
+        <select id="g-formule"></select>
+      </div>
+    </div>
+
+    <div class="g-field">
+      <label>Prénom du bénéficiaire <span style="text-transform:none;letter-spacing:0">(facultatif)</span></label>
+      <input type="text" id="g-benef" placeholder="Sophie">
+    </div>
+
+    <div class="g-field">
+      <label>Message personnel <span style="text-transform:none;letter-spacing:0">(facultatif)</span></label>
+      <textarea id="g-msg" placeholder="Pour notre anniversaire, une parenthèse rien qu'à nous…"></textarea>
+    </div>
+
+    <div class="g-field">
+      <label>Date d'émission</label>
+      <input type="date" id="g-date">
+    </div>
+
+    <div class="g-field">
+      <label>Photo (remplace celle par défaut)</label>
+      <input type="file" id="g-photo" accept="image/*">
+    </div>
+
+    <div class="g-field">
+      <label>E-mail de l'acheteur (pour l'envoi)</label>
+      <input type="email" id="g-buyer-email" placeholder="acheteur@email.com">
+    </div>
+
+    <div class="g-actions">
+      <button class="g-btn" type="button" id="g-print">1. Télécharger le PDF</button>
+      <button class="g-btn" type="button" id="g-gmail" style="background:var(--gold-dark)">2. Ouvrir l'e-mail Gmail</button>
+      <button class="g-btn secondary" type="button" id="g-copy">Copier le code</button>
+      <div class="g-hint">Cliquez « Télécharger le PDF », puis « Ouvrir l'e-mail » :<br>Gmail s'ouvre avec le texte pré-rempli. Glissez-y le PDF<br>et envoyez. (La pièce jointe ne peut pas être ajoutée<br>automatiquement — c'est une sécurité des navigateurs.)</div>
+    </div>
+  </div>
+
+  <!-- CARTE -->
+  <div class="card-zone">
+    <div class="card-zone-label">Aperçu — identique au PDF final</div>
+    <div class="ldc-gift-card">
+      <div class="ldc-photo" id="c-photo-wrap"><img id="c-photo" alt=""></div>
+      <div class="ldc-card-top">
+        <div class="ldc-c-brand" id="c-brand"></div>
+        <div class="ldc-c-title" id="c-title"></div>
+        <div class="ldc-c-sub" id="c-sub"></div>
+        <div class="ldc-c-dedic" id="c-dedic"></div>
+        <div class="ldc-c-amount">
+          <span class="ldc-c-amount-num" id="c-montant">—</span>
+          <span class="ldc-c-amount-cur">EUR</span>
+        </div>
+        <div class="ldc-c-deco">◇</div>
+      </div>
+      <div class="ldc-card-body">
+        <div class="ldc-c-orn"><div class="ldc-c-orn-line"></div><div class="ldc-c-orn-dot"></div><div class="ldc-c-orn-line"></div></div>
+        <div class="ldc-c-ftag">Formule incluse</div>
+        <div class="ldc-c-fname" id="c-fname"></div>
+        <div class="ldc-c-fdesc" id="c-fdesc"></div>
+        <div class="ldc-c-features" id="c-features"></div>
+        <div class="ldc-c-msg" id="c-msg"></div>
+        <div class="ldc-c-code">
+          <div class="ldc-c-code-label">Code cadeau</div>
+          <div class="ldc-c-code-val" id="c-code">LDR-XXXXXX</div>
+          <div class="ldc-c-validity" id="c-validity"></div>
+        </div>
+      </div>
+      <div class="ldc-card-foot">
+        <div class="ldc-foot-qr" id="c-qr"></div>
+        <div class="ldc-foot-infos">
+          <div class="ldc-card-foot-text" id="c-foot"></div>
+          <div class="ldc-card-foot-site" id="c-site"></div>
+          <div class="ldc-card-foot-contact" id="c-contact"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — tout se personnalise ici (white-label / pack métier)
+   Un objet par établissement : c'est ce format qui deviendra la
+   config par tenant dans le SaaS.
+   ============================================================ */
+var CONFIG = {
+  brand: 'Like a Dream Room',
+  titleHTML: 'Une <em>parenthèse</em><br>en amoureux',
+  subtitle: 'Blennes · Seine-et-Marne · À 1h de Paris',
+
+  /* Photo par défaut de l'hébergement (URL absolue recommandée,
+     ex. une image déjà hébergée sur likeadreamroom.fr).
+     Laisser vide '' pour une carte sans photo.
+     Photo secondaire dispo : https://l.icdbcdn.com/oh/d6f84e35-3794-47a4-a9b6-3157ee05b5e1.jpg?w=1200 */
+  photoUrl: 'https://l.icdbcdn.com/oh/a567bf64-4ac9-4a86-a319-1d5c571255ba.jpg?w=1200',
+
+  /* Équipements / points forts affichés sous la formule */
+  features: ['Jacuzzi privatif', 'Piscine chauffée', 'Jardin privé', 'Literie haut de gamme'],
+
+  codePrefix: 'LDR-',
+  validityMonths: 12,
+
+  /* Le QR code pointe vers cette page (réservation) */
+  bookingUrl: 'https://likeadreamroom.fr',
+  site: 'likeadreamroom.fr',
+  contactLine: 'contact@likeadream.fr',   /* e-mail et/ou téléphone */
+  footerText: 'Scannez pour découvrir & réserver — saisissez votre code lors de la réservation en ligne.',
+
+  formules: [
+    { name: 'Escapade',   desc: '1 nuit · Hébergement & équipements privatifs' },
+    { name: 'Romance',    desc: '1 nuit · Petit-déjeuner & mise en scène romantique' },
+    { name: 'Prestige',   desc: '1 nuit · Champagne, chocolats & scénographie exclusive' },
+    { name: 'Sur-mesure', desc: 'Expérience personnalisée' }
+  ],
+
+  /* --- Envoi Gmail ---
+     senderEmail : le compte Gmail/Workspace depuis lequel envoyer.
+     Gmail ouvre le compte actif ; s'il y en a plusieurs, le
+     paramètre authuser aide à viser le bon (0 = premier compte).
+     emailSubject / emailBody : {code}, {benef}, {montant}, {formule}
+     sont remplacés automatiquement. */
+  senderEmail: 'contact@likeadream.fr',
+  gmailAuthUser: 0,
+  emailSubject: 'Votre carte cadeau Like a Dream Room — {code}',
+  emailBody:
+'Bonjour,\n\n'
++ 'Merci pour votre commande et votre confiance.\n\n'
++ 'Vous trouverez en pièce jointe votre carte cadeau Like a Dream Room (formule {formule}, d\u2019une valeur de {montant} \u20ac).\n\n'
++ 'Le code cadeau est : {code}\n'
++ 'Il est valable 12 mois et se saisit directement lors de la réservation en ligne sur likeadreamroom.fr.\n\n'
++ 'Vous pouvez transmettre cette carte au bénéficiaire quand vous le souhaitez.\n\n'
++ 'Pour toute question, nous restons à votre disposition.\n\n'
++ 'Bien chaleureusement,\n'
++ 'L\u2019équipe Like a Dream Room\n'
++ 'likeadreamroom.fr'
+};
+
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* Habillage statique depuis CONFIG */
+  $('c-brand').textContent = CONFIG.brand;
+  $('c-title').innerHTML = CONFIG.titleHTML;
+  $('c-sub').textContent = CONFIG.subtitle;
+  $('c-foot').textContent = CONFIG.footerText;
+  $('c-site').textContent = CONFIG.site;
+  $('c-contact').textContent = CONFIG.contactLine;
+
+  /* Équipements */
+  var feats = $('c-features');
+  (CONFIG.features || []).forEach(function(f){
+    var d = document.createElement('div');
+    d.className = 'ldc-c-feature'; d.textContent = f;
+    feats.appendChild(d);
+  });
+
+  /* Photo par défaut */
+  if (CONFIG.photoUrl) {
+    $('c-photo').src = CONFIG.photoUrl;
+    $('c-photo-wrap').style.display = 'block';
+  }
+
+  /* Photo personnalisée (upload local, fonctionne hors ligne) */
+  $('g-photo').addEventListener('change', function(){
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function(){
+      $('c-photo').src = r.result;
+      $('c-photo-wrap').style.display = 'block';
+    };
+    r.readAsDataURL(f);
+  });
+
+  /* QR code vers la page de réservation (nécessite internet au
+     chargement pour la librairie ; masqué proprement sinon) */
+  try {
+    if (typeof QRCode !== 'undefined') {
+      new QRCode($('c-qr'), {
+        text: CONFIG.bookingUrl, width: 96, height: 96,
+        colorDark: '#5C4F3A', colorLight: '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      $('c-qr').style.display = 'none';
+    }
+  } catch(e){ $('c-qr').style.display = 'none'; }
+
+  /* Formules dans le select */
+  var sel = $('g-formule');
+  CONFIG.formules.forEach(function(f){
+    var o = document.createElement('option');
+    o.value = f.name; o.textContent = f.name;
+    sel.appendChild(o);
+  });
+
+  /* Date d'émission = aujourd'hui par défaut */
+  $('g-date').value = new Date().toISOString().slice(0,10);
+
+  /* Génération de code (sans 0/O, 1/I/L) */
+  function genCode(){
+    var chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', s = '';
+    for (var i = 0; i < 6; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+    return CONFIG.codePrefix + s;
+  }
+
+  function frDate(d){
+    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  /* Mise à jour de l'aperçu */
+  function sync(){
+    var code = $('g-code').value.trim() || CONFIG.codePrefix + 'XXXXXX';
+    $('c-code').textContent = code.toUpperCase();
+
+    var m = $('g-montant').value;
+    $('c-montant').textContent = m && Number(m) > 0 ? Number(m) : '—';
+
+    var f = CONFIG.formules.find(function(x){ return x.name === sel.value; }) || CONFIG.formules[0];
+    $('c-fname').textContent = f.name;
+    $('c-fdesc').textContent = f.desc;
+
+    var b = $('g-benef').value.trim();
+    $('c-dedic').textContent = b ? 'Pour ' + b : '';
+    $('c-dedic').style.display = b ? 'block' : 'none';
+
+    var msg = $('g-msg').value.trim();
+    $('c-msg').textContent = msg ? '« ' + msg + ' »' : '';
+    $('c-msg').style.display = msg ? 'block' : 'none';
+
+    var d = $('g-date').value ? new Date($('g-date').value + 'T12:00:00') : new Date();
+    var end = new Date(d);
+    end.setMonth(end.getMonth() + CONFIG.validityMonths);
+    $('c-validity').innerHTML = 'Émise le ' + frDate(d) + ' · Valable jusqu\u2019au ' + frDate(end);
+
+    /* Nom du PDF = titre du document */
+    document.title = 'Carte cadeau ' + code.toUpperCase() + ' — ' + CONFIG.brand;
+  }
+
+  ['g-code','g-montant','g-benef','g-msg','g-date'].forEach(function(id){
+    $(id).addEventListener('input', sync);
+  });
+  sel.addEventListener('change', sync);
+
+  $('g-gen').addEventListener('click', function(){
+    $('g-code').value = genCode();
+    sync();
+  });
+
+  $('g-print').addEventListener('click', function(){ window.print(); });
+
+  $('g-gmail').addEventListener('click', function(){
+    var code    = $('g-code').value.trim().toUpperCase() || (CONFIG.codePrefix + 'XXXXXX');
+    var montant = $('g-montant').value ? Number($('g-montant').value) : '—';
+    var formule = sel.value;
+    var benef   = $('g-benef').value.trim();
+    var to      = $('g-buyer-email').value.trim();
+
+    function fill(tpl){
+      return tpl
+        .replace(/{code}/g, code)
+        .replace(/{montant}/g, montant)
+        .replace(/{formule}/g, formule)
+        .replace(/{benef}/g, benef || '');
+    }
+    var subject = fill(CONFIG.emailSubject);
+    var body    = fill(CONFIG.emailBody);
+
+    /* Compose Gmail (webmail) sur le bon compte — format view=cm,
+       le plus fiable pour ouvrir une nouvelle fenêtre de rédaction */
+    var gmail = 'https://mail.google.com/mail/u/' + encodeURIComponent(CONFIG.senderEmail || CONFIG.gmailAuthUser)
+      + '/?view=cm&fs=1&tf=1'
+      + '&to=' + encodeURIComponent(to)
+      + '&su=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(body);
+
+    window.open(gmail, '_blank');
+  });
+
+  $('g-copy').addEventListener('click', function(){
+    var code = $('g-code').value.trim();
+    if (!code) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code);
+    } else {
+      var t = document.createElement('textarea');
+      t.value = code; document.body.appendChild(t);
+      t.select(); document.execCommand('copy'); document.body.removeChild(t);
+    }
+    var btn = $('g-copy'), old = btn.textContent;
+    btn.textContent = 'Code copié ✓';
+    setTimeout(function(){ btn.textContent = old; }, 1500);
+  });
+
+  /* Premier rendu */
+  $('g-code').value = genCode();
+  sync();
+})();
+</script>
+</body>
+</html>
