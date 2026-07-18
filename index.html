@@ -7,6 +7,8 @@
 <title>Générateur de carte cadeau — Like a Dream Room</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ============================================================
    GÉNÉRATEUR DE CARTE CADEAU v2 — usage interne
@@ -51,6 +53,7 @@ body{font-family:'Jost',sans-serif;font-weight:300;color:var(--text-dark);paddin
 .g-actions{margin-top:1.4rem;display:flex;flex-direction:column;gap:.6rem}
 .g-btn{background:var(--gold);color:var(--white);border:none;padding:.85rem;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.26em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background .2s}
 .g-btn:hover{background:var(--gold-dark)}
+.g-btn:disabled{cursor:wait;opacity:.65}
 .g-btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text-mid)}
 .g-btn.secondary:hover{border-color:var(--gold);color:var(--gold-dark);background:transparent}
 .g-hint{font-size:9px;color:var(--text-muted);line-height:1.6;text-align:center}
@@ -388,7 +391,53 @@ var CONFIG = {
     sync();
   });
 
-  $('g-print').addEventListener('click', function(){ window.print(); });
+  $('g-print').addEventListener('click', async function(){
+    var btn = this;
+    var old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Création du PDF…';
+
+    try {
+      if (!window.html2canvas || !window.jspdf) {
+        throw new Error('Les outils PDF ne sont pas disponibles. Vérifiez votre connexion internet.');
+      }
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+      var photo = $('c-photo');
+      if (photo.src && !photo.complete && photo.decode) {
+        try { await photo.decode(); } catch(e) { /* Le PDF reste possible sans photo. */ }
+      }
+
+      var card = document.querySelector('.ldc-gift-card');
+      var canvas = await window.html2canvas(card, {
+        backgroundColor: '#FFFFFF',
+        scale: Math.max(2, window.devicePixelRatio || 1),
+        useCORS: true,
+        logging: false
+      });
+
+      var jsPDF = window.jspdf.jsPDF;
+      var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
+      var pageWidth = 148, pageHeight = 210, maxWidth = 128, maxHeight = 190;
+      var ratio = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
+      var width = canvas.width * ratio, height = canvas.height * ratio;
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.96), 'JPEG',
+        (pageWidth - width) / 2, (pageHeight - height) / 2, width, height);
+
+      var code = $('g-code').value.trim().toUpperCase() || (CONFIG.codePrefix + 'XXXXXX');
+      var filename = ('Carte-cadeau-' + code + '.pdf').replace(/[^a-zA-Z0-9._-]/g, '-');
+      pdf.save(filename);
+
+      btn.textContent = 'PDF téléchargé ✓';
+      setTimeout(function(){ btn.textContent = old; }, 1800);
+    } catch(error) {
+      console.error(error);
+      alert('Le PDF n’a pas pu être créé. ' + (error && error.message ? error.message : 'Réessayez dans quelques instants.'));
+      btn.textContent = old;
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   $('g-gmail').addEventListener('click', function(){
     var code    = $('g-code').value.trim().toUpperCase() || (CONFIG.codePrefix + 'XXXXXX');
