@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Générateur de carte cadeau — Like a Dream Room</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%23B8935A%22/><path d=%22M19 25h26v23H19zM16 19h32v9H16zM32 19v29M23 19c-5-7 8-10 9 0M41 19c5-7-8-10-9 0%22 fill=%22none%22 stroke=%22white%22 stroke-width=%223%22/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
 <style>
 /* ============================================================
    GÉNÉRATEUR DE CARTE CADEAU v2 — usage interne
@@ -236,7 +237,7 @@ var CONFIG = {
      ex. une image déjà hébergée sur likeadreamroom.fr).
      Laisser vide '' pour une carte sans photo.
      Photo secondaire dispo : https://l.icdbcdn.com/oh/d6f84e35-3794-47a4-a9b6-3157ee05b5e1.jpg?w=1200 */
-  photoUrl: 'https://l.icdbcdn.com/oh/a567bf64-4ac9-4a86-a319-1d5c571255ba.jpg?w=1200',
+  photoUrl: './photo-default.jpg',
 
   /* Équipements / points forts affichés sous la formule */
   features: ['Jacuzzi privatif', 'Piscine chauffée', 'Jardin privé', 'Literie haut de gamme'],
